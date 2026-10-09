@@ -7,23 +7,23 @@ Theo đúng template §4 "Sau Failover: Blameless Postmortem". Blameless: câu h
 
 | ISO time | Sự kiện | Evidence |
 |---|---|---|
-| | outage bắt đầu | |
-| | user đầu tiên bị ảnh hưởng | |
-| | health check alert | |
-| | operator confirm cutover | |
-| | resolved (request đầu tiên OK từ region phụ) | |
+| 2026-10-09T15:22:25.0 | outage bắt đầu | chaos/chaos-events.jsonl |
+| 2026-10-09T15:22:25.5 | user đầu tiên bị ảnh hưởng | reports/drill-2-withdr.jsonl |
+| 2026-10-09T15:22:39.4 | health check alert | reports/health-events.jsonl |
+| 2026-10-09T15:22:53.4 | operator confirm cutover | reports/failover-events.jsonl |
+| 2026-10-09T15:22:57.8 | resolved (request đầu tiên OK từ region phụ) | reports/drill-2-withdr.jsonl |
 
 ## 2. RTO/RPO đo được vs mục tiêu — gap ở bước nào?
 
-- RTO mục tiêu: 300s · đo được: `__s` · gap: `__s`
-- RPO mục tiêu: 300s · đo được: `__s` (`__` doc bị mất) · gap: `__s`
-- **Bước tốn nhiều giây nhất:** `____` — vì sao?
+- RTO mục tiêu: 300s · đo được: 32.8s · gap: Đạt chỉ tiêu
+- RPO mục tiêu: 300s · đo được: 10.0s (5 doc bị mất) · gap: Đạt chỉ tiêu
+- **Bước tốn nhiều giây nhất:** Chờ đợi Health Check phát hiện (14.4 giây) — vì cấu hình `interval_s` = 5 và `threshold` = 3 nên bắt buộc phải đợi tối thiểu 15 giây mới dám ra quyết định failover (chống flapping).
 
 ## 3. Root cause (5 whys)
 
 Không phải "vì tôi chạy chaos script". Câu hỏi: *nếu đây là outage thật, bước nào
 trong runbook của tôi sẽ thất bại?*
-
+Hệ thống đã có cơ chế tự động chuyển vùng (Failover) bằng DNS và phục hồi dữ liệu từ bản Snapshot. Các bước khôi phục đã diễn ra thành công tốt đẹp theo đúng quy trình Runbook mà không bị gián đoạn. Thời gian RTO 32.8s chủ yếu đến từ chiến lược chờ (wait) an toàn để chống báo động giả.
 ## 4. Action items (có owner + deadline)
 
 | # | Action | Owner | Deadline | Giảm RTO/RPO bao nhiêu giây |
